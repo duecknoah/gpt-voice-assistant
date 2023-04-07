@@ -90,10 +90,6 @@ def chunk_streamed_response(prompt):
     
     if current_sentence != '':
         yield current_sentence
-
-# def speak(audio):
-#     engine.say(audio)
-#     engine.runAndWait()
  
 def takeCommand():
     r = sr.Recognizer()
