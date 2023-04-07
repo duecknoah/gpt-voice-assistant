@@ -8,6 +8,7 @@ from urllib.request import urlopen
 from dotenv import load_dotenv
 import openai
 from speech import say_text;
+from sound_queue import wait_for_sound_queue
 # Import the required library
 
 # Load variables from .env file
@@ -68,7 +69,11 @@ def chunk_streamed_response(prompt):
     # play as our message is being generated for faster response time
     #
     # We should yield in our iterator anytime a new sentence_chunk is created
-    MIN_SENTENCE_CHUNK_LEN = 60 # in num of tokens
+    INITIAL_MIN_SENTENCE_CHUNK_LEN = 60 # in num of tokens
+    SENTENCE_CHUNK_LEN_INCR = 200 # Increment the min length of each new chunk in order to not overwhelm the elevenlabs api. Ideally we could use something like exponential backoff calculations:
+    # https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html#error-handling-retrying-after-an-error
+    CURRENT_SENTENCE_CHUNK_LEN = INITIAL_MIN_SENTENCE_CHUNK_LEN
+
     response = gen_streamed_response(prompt)
     collected_chunks = []
     current_sentence = ''
@@ -78,9 +83,10 @@ def chunk_streamed_response(prompt):
         if "content" in chunk_message:
 
             current_sentence += chunk_message["content"]
-            if (chunk_message["content"] == '.' or chunk_message["content"] == "!" or chunk_message["content"] == "?") and len(current_sentence) > MIN_SENTENCE_CHUNK_LEN:
+            if (chunk_message["content"] == '.' or chunk_message["content"] == "!" or chunk_message["content"] == "?") and len(current_sentence) > CURRENT_SENTENCE_CHUNK_LEN:
                 yield current_sentence
                 current_sentence = ''
+                CURRENT_SENTENCE_CHUNK_LEN += SENTENCE_CHUNK_LEN_INCR
     
     if current_sentence != '':
         yield current_sentence
@@ -93,7 +99,8 @@ def takeCommand():
     r = sr.Recognizer()
      
     with sr.Microphone() as source:
-         
+        print('Waiting for sound queue...')
+        wait_for_sound_queue()
         print("Listening...")
         r.pause_threshold = 1
         audio = r.listen(source)
@@ -102,6 +109,7 @@ def takeCommand():
         print("Recognizing...")   
         query = r.recognize_google(audio, language ='en-in')
         print(f"User said: {query}\n")
+        
         for sentence in chunk_streamed_response(query):
             print(sentence)
             say_text(sentence)

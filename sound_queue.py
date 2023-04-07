@@ -1,6 +1,6 @@
 import queue
 import threading
-from playsound import playsound
+import playsound
 import os
 
 sound_queue = queue.Queue()
@@ -11,7 +11,7 @@ def play_sounds():
         sound_file = sound_queue.get()
 
         # Play the sound file
-        playsound(sound_file)
+        playsound.playsound(sound_file)
         os.remove(sound_file) # Delete sound file after playing it
 
         # Mark the dequeued item as complete
@@ -20,6 +20,13 @@ def play_sounds():
 def add_to_sound_queue(sound_file):
     # Add the sound file to the queue
     sound_queue.put(sound_file)
+
+def clear_sound_queue():
+    # Clear the sound queue
+    sound_queue.queue.clear()
+
+def wait_for_sound_queue():
+    sound_queue.join()
 
 # Start the thread for playing sounds
 sound_thread = threading.Thread(target=play_sounds, daemon=True)

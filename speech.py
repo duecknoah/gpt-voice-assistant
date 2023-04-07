@@ -16,6 +16,8 @@ tts_headers = {
     "xi-api-key": os.getenv("ELEVENLABS_APIKEY")
 }
 
+def generate_sound_uuid():
+    return f"speech_{uuid.uuid4().hex}.mpeg"
 
 
 def eleven_labs_speech(text, voice_index):
@@ -26,7 +28,7 @@ def eleven_labs_speech(text, voice_index):
         tts_url, headers=tts_headers, json=formatted_message)
 
     if response.status_code == 200:
-        uuid_filename = f"speech_{uuid.uuid4().hex}.mpeg"
+        uuid_filename = generate_sound_uuid()
         with open(uuid_filename, "wb") as f:
             f.write(response.content)
         add_to_sound_queue(uuid_filename)
@@ -36,16 +38,16 @@ def eleven_labs_speech(text, voice_index):
         print("Response content:", response.content)
         return False
 
-# def gtts_speech(text):
-#     tts = gtts.gTTS(text)
-#     tts.save("speech.mp3")
-#     playsound("speech.mp3", False)
-#     os.remove("speech.mp3")
+def gtts_speech(text):
+    tts = gtts.gTTS(text)
+    file_name = generate_sound_uuid()
+    tts.save(file_name)
+    add_to_sound_queue(file_name)
 
 def say_text(text, voice_index=2):
-    # if not os.getenv("ELEVENLABS_APIKEY"):
-    #     gtts_speech(text)
-    # else:
+    if not os.getenv("ELEVENLABS_APIKEY"):
+        gtts_speech(text)
+    else:
         success = eleven_labs_speech(text, voice_index)
-        # if not success:
-        #     gtts_speech(text)
+        if not success:
+            gtts_speech(text)
