@@ -12,3 +12,6 @@ ElvenLabs provides a very realistic sounding voice.
 3. Install requirements: `pip install -r requirements.txt`
 4. Make sure to have a microphone plugged in
 4. Run via `python main.py`
+
+Note:
+- WIP: You can skip the TTS (after generation) with spacebar
