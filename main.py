@@ -90,31 +90,30 @@ def chunk_streamed_response(prompt):
         yield current_sentence
 
 
-def takeCommand():
+def take_commands():
     r = sr.Recognizer()
+    is_retry = False
 
-    with sr.Microphone() as source:
-        print("Waiting for sound queue...")
-        wait_for_sound_queue(True)
-        print("Listening...")
-        r.pause_threshold = 1
-        audio = r.listen(source)
+    while True:
+        with sr.Microphone() as source:
+            if not is_retry:
+                wait_for_sound_queue(True)
+                print("You: ", end='')
+                r.pause_threshold = 1
+            audio = r.listen(source)
 
-    try:
-        print("Recognizing...")
-        query = r.recognize_google(audio, language="en-in")
-        print(f"User said: {query}\n")
+        try:
+            query = r.recognize_google(audio, language="en-in")
+            is_retry = False
+            print(f"{query}\nAI: ", end='')
 
-        for sentence in chunk_streamed_response(query):
-            print(sentence)
-            say_text(sentence)
+            for sentence in chunk_streamed_response(query):
+                print(sentence, end='')
+                say_text(sentence)
 
-    except Exception as e:
-        print(e)
-        print("Unable to Recognize your voice.")
-
-    return ""
+            print()  # new line
+        except Exception as e:
+            is_retry = True
 
 
-while True:
-    takeCommand()
+take_commands()
