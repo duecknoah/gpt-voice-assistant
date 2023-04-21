@@ -46,7 +46,7 @@ def gtts_speech(text):
     add_to_sound_queue(file_name)
 
 
-def say_text(text, voice_index=2):
+def say_text(text, voice_index=1):
     if not os.getenv("ELEVENLABS_APIKEY"):
         gtts_speech(text)
     else:

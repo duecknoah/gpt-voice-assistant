@@ -94,10 +94,12 @@ def take_commands():
     r = sr.Recognizer()
     is_retry = False
 
+    print("Now Listening, Press 'Spacebar' to skip and stop the AI from talking")
     while True:
         with sr.Microphone() as source:
             if not is_retry:
                 wait_for_sound_queue(True)
+                print('Listening...')
                 print("You: ", end='')
                 r.pause_threshold = 1
             audio = r.listen(source)
