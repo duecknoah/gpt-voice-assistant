@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 import openai
 from speech import say_text
 from sound_queue import wait_for_sound_queue
+import keyboard
 
 # Import the required library
 
@@ -57,7 +58,7 @@ def gen_streamed_response(prompt):
     return response
 
 
-def chunk_streamed_response(prompt):
+def chunk_streamed_response(prompt, livePrint=True):
     # Openai chunks by token. From those chunks we want to break the streamed
     # response by sentence. We can use '.' as our separator or separate by length.
     # That way we can immediatly kickoff elevenlabs tts for each sentence and have it
@@ -73,10 +74,14 @@ def chunk_streamed_response(prompt):
     collected_chunks = []
     current_sentence = ""
     for chunk in response:
+        if keyboard.is_pressed(" "):
+            return
         collected_chunks.append(chunk)
         chunk_message = chunk["choices"][0]["delta"]
         if "content" in chunk_message:
             current_sentence += chunk_message["content"]
+            if livePrint:
+                print(chunk_message["content"], end="", flush=True)
             if (
                 chunk_message["content"] == "."
                 or chunk_message["content"] == "!"
@@ -110,7 +115,6 @@ def take_commands():
             print(f"{query}\nAI: ", end='')
 
             for sentence in chunk_streamed_response(query):
-                print(sentence, end='')
                 say_text(sentence)
 
             print()  # new line
