@@ -58,7 +58,7 @@ def gen_streamed_response(prompt):
     return response
 
 
-def chunk_streamed_response(prompt, livePrint=True):
+def chunk_streamed_response(prompt, allow_keyboard_skip=False, livePrint=True):
     # Openai chunks by token. From those chunks we want to break the streamed
     # response by sentence. We can use '.' as our separator or separate by length.
     # That way we can immediatly kickoff elevenlabs tts for each sentence and have it
@@ -74,7 +74,7 @@ def chunk_streamed_response(prompt, livePrint=True):
     collected_chunks = []
     current_sentence = ""
     for chunk in response:
-        if keyboard.is_pressed(" "):
+        if allow_keyboard_skip and keyboard.is_pressed(" "):
             return
         collected_chunks.append(chunk)
         chunk_message = chunk["choices"][0]["delta"]
@@ -95,15 +95,16 @@ def chunk_streamed_response(prompt, livePrint=True):
         yield current_sentence
 
 
-def take_commands():
+def take_commands(allow_keyboard_skip: bool):
     r = sr.Recognizer()
     is_retry = False
 
-    print("Now Listening, Press 'Spacebar' to skip and stop the AI from talking")
+    if allow_keyboard_skip:
+        print('Press Spacebar to skip and stop the AI from talking ...')
     while True:
         with sr.Microphone() as source:
             if not is_retry:
-                wait_for_sound_queue(True)
+                wait_for_sound_queue(allow_keyboard_skip=allow_keyboard_skip)
                 print('Listening...')
                 print("You: ", end='')
                 r.pause_threshold = 1
@@ -114,12 +115,13 @@ def take_commands():
             is_retry = False
             print(f"{query}\nAI: ", end='')
 
-            for sentence in chunk_streamed_response(query):
+            for sentence in chunk_streamed_response(query, allow_keyboard_skip=allow_keyboard_skip):
                 say_text(sentence)
 
             print()  # new line
         except Exception as e:
             is_retry = True
+            print(e)
 
 
-take_commands()
+take_commands(allow_keyboard_skip=False)
